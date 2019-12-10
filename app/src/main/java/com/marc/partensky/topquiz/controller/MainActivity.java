@@ -12,12 +12,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.marc.partensky.topquiz.R;
+import com.marc.partensky.topquiz.model.User;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView mGreetingText;
-    private EditText mNameInput;
-    private Button mPlayButton;
+    protected TextView mGreetingText;
+    protected EditText mNameInput;
+    protected Button mPlayButton;
+    protected User mUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
