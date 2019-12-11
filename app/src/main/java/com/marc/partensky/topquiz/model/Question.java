@@ -1,27 +1,41 @@
 package com.marc.partensky.topquiz.model;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Question {
+
     protected String mQuestion;
-    protected List<String> mChoiceList;
+    protected List<String> mAnswersList;
     protected int mAnswerIndex;
     
-    public Question(String question, List<String> choiceList, int answerIndex) {
-        this.setQuestion(question);
-        this.setChoiceList(choiceList);
-        this.setAnswerIndex(answerIndex);
+    public Question(String question, List<String> answersList, int answerIndex) {
+        mQuestion = question;
+        mAnswersList = answersList;
+        mAnswerIndex = answerIndex;
     }
 
-    private void setQuestion(String question) {
+    protected void shuffle() {
+        String answer = mAnswersList.get(mAnswerIndex);
+        Collections.shuffle(mAnswersList);
+        mAnswerIndex = mAnswersList.indexOf(answer);
 
     }
 
-    private void setChoiceList(List<String> choiceList) {
-
+    public String getQuestion() {
+        return mQuestion;
     }
 
-    private void setAnswerIndex(int answerIndex) {
-
+    public List<String> getChoiceList() {
+        return mAnswersList;
     }
+
+    public int getAnswerIndex() {
+        return mAnswerIndex;
+    }
+
+    public String getAnswer() {
+        return mAnswersList.get(mAnswerIndex);
+    }
+
 }

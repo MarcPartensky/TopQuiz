@@ -2,6 +2,7 @@ package com.marc.partensky.topquiz.model;
 
 public class User {
     protected String mFirstName;
+    protected int mScore = 0;
 
     public String getFirstName() {
         return mFirstName;
@@ -17,4 +18,13 @@ public class User {
                 "mFirstName='" + mFirstName + '\'' +
                 '}';
     }
+
+    public void win() {
+        mScore++;
+    }
+
+    public int getScore() {
+        return mScore;
+    }
+
 }

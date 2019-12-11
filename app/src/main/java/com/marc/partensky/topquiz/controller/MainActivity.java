@@ -1,8 +1,10 @@
 package com.marc.partensky.topquiz.controller;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,6 +22,20 @@ public class MainActivity extends AppCompatActivity {
     protected EditText mNameInput;
     protected Button mPlayButton;
     protected User mUser;
+    public static final int QUESTION_ACTIVITY_REQUEST_CODE = 0;
+    protected SharedPreferences mPreferences;
+
+    public static final String PREF_KEY_SCORE = "PREF_KEY_SCORE";
+    public static final String PREF_KEY_FIRSTNAME = "PREF_KEY_FIRSTNAME";
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (QUESTION_ACTIVITY_REQUEST_CODE == requestCode && RESULT_OK == resultCode) {
+            int score = data.getIntExtra(QuestionActivity.BUNDLE_EXTRA_SCORE, 0);
+
+            mPreferences.edit().putInt(PREF_KEY_SCORE, score).apply();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mUser = new User();
+
+        mPreferences = getPreferences(MODE_PRIVATE);
 
         mGreetingText = findViewById(R.id.activity_main_greeting_txt);
         mNameInput = findViewById(R.id.activity_main_name_input);
@@ -56,9 +74,15 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String firstname = mNameInput.getText().toString();
                 mUser.setFirstName(firstname);
-                Intent gameActivityIntent = new Intent(MainActivity.this, GameActivity.class);
-                startActivity(gameActivityIntent);
+
+                mPreferences.edit().putString(PREF_KEY_FIRSTNAME, mUser.getFirstName()).apply();
+
+
+                Intent questionActivityIntent = new Intent(MainActivity.this, QuestionActivity.class);
+                startActivityForResult(questionActivityIntent, QUESTION_ACTIVITY_REQUEST_CODE);
             }
         });
+
+
     }
 }
