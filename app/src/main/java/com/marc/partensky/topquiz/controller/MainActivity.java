@@ -34,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
             int score = data.getIntExtra(QuestionActivity.BUNDLE_EXTRA_SCORE, 0);
 
             mPreferences.edit().putInt(PREF_KEY_SCORE, score).apply();
+
+            greetUser();
         }
     }
 
@@ -51,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
         mPlayButton = findViewById(R.id.activity_main_play_btn);
 
         mPlayButton.setEnabled(false);
+
+        greetUser();
 
         mNameInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -83,6 +87,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
 
+    protected void greetUser() {
+        String firstname = mPreferences.getString(PREF_KEY_FIRSTNAME, null);
+
+        if (null != firstname) {
+            int score = mPreferences.getInt(PREF_KEY_SCORE, 0);
+
+            String fulltext = "Welcome back, " + firstname
+                    + "!\nYour last score was " + score
+                    + ", will you do better this time?";
+            mGreetingText.setText(fulltext);
+            mNameInput.setText(firstname);
+            mNameInput.setSelection(firstname.length());
+            mPlayButton.setEnabled(true);
+        }
     }
 }

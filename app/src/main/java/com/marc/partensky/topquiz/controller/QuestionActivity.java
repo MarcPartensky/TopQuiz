@@ -2,6 +2,8 @@ package com.marc.partensky.topquiz.controller;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
@@ -11,14 +13,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.annotation.RequiresPermission;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.marc.partensky.topquiz.R;
 import com.marc.partensky.topquiz.model.Question;
 import com.marc.partensky.topquiz.model.QuestionBank;
+import com.opencsv.CSVReader;
 
-import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 
 import es.dmoral.toasty.Toasty;
 
@@ -29,46 +41,44 @@ public class QuestionActivity extends AppCompatActivity implements View.OnClickL
     protected Button mAnswerButton2;
     protected Button mAnswerButton3;
     protected Button mAnswerButton4;
+
     protected QuestionBank mQuestionBank;
-    protected int mAnswerIndex;
-    protected int mUserAnswerIndex;
-    protected int mScore = 0;
-    public static final String BUNDLE_EXTRA_SCORE = "EXTRA_SCORE";
+    protected Question mQuestion;
+
+    protected int mScore;
+
+    public static final String BUNDLE_EXTRA_SCORE = "BUNDLE_EXTRA_SCORE";
+    public static final String BUNDLE_STATE_SCORE = "BUNDLE_STATE_SCORE";
+    public static final String BUNDLE_STATE_QUESTION = "BUNDLE_STATE_QUESTION";
+
     protected boolean mEnableTouchEvents;
 
 
-    public QuestionBank generateQuestions() {
-        Question question1 = new Question("Who is the creator of Android?",
-                Arrays.asList("Andy Rubin",
-                        "Steve Wozniak",
-                        "Jake Wharton",
-                        "Paul Smith"),
-                0);
-
-        Question question2 = new Question("When did the first man land on the moon?",
-                Arrays.asList("1958",
-                        "1962",
-                        "1967",
-                        "1969"),
-                3);
-
-        Question question3 = new Question("What is the house number of The Simpsons?",
-                Arrays.asList("42",
-                        "101",
-                        "666",
-                        "742"),
-                3);
-
-        return new QuestionBank(Arrays.asList(question1, question2, question3));
-    }
-
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_question);
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(getResources().openRawResource(R.string.file)));//Specify asset file name
+            System.out.println(reader);
+            mQuestionBank = QuestionBank.buildFromCSV(reader);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toasty.error(this, "The questions can't be loaded.",
+                    Toast.LENGTH_LONG).show();
+            mQuestionBank = new QuestionBank(new ArrayList());
+        }
 
-        mQuestionBank = this.generateQuestions();
+        if (savedInstanceState != null) {
+            mScore = savedInstanceState.getInt(BUNDLE_EXTRA_SCORE);
+            mQuestionBank.setIndex(savedInstanceState.getInt(BUNDLE_STATE_QUESTION));
+        } else {
+            mQuestionBank.shuffle();
+        }
+
         mEnableTouchEvents = true;
+        mScore = 0;
 
         mScoreTextView = findViewById(R.id.activity_question_score_text);
         mQuestionTextView = findViewById(R.id.activity_question_question_text);
@@ -116,20 +126,19 @@ public class QuestionActivity extends AppCompatActivity implements View.OnClickL
     }
 
     protected void ask() {
-        Question question = mQuestionBank.getQuestion();
-        mAnswerIndex = question.getAnswerIndex();
+        mQuestion = mQuestionBank.getQuestion();
         mScoreTextView.setText(String.valueOf(mScore));
-        mQuestionTextView.setText(question.getQuestion());
-        mAnswerButton1.setText(question.getChoiceList().get(0));
-        mAnswerButton2.setText(question.getChoiceList().get(1));
-        mAnswerButton3.setText(question.getChoiceList().get(2));
-        mAnswerButton4.setText(question.getChoiceList().get(3));
+        mQuestionTextView.setText(mQuestion.getQuestion());
+        mAnswerButton1.setText(mQuestion.getChoiceList().get(0));
+        mAnswerButton2.setText(mQuestion.getChoiceList().get(1));
+        mAnswerButton3.setText(mQuestion.getChoiceList().get(2));
+        mAnswerButton4.setText(mQuestion.getChoiceList().get(3));
     }
 
     @Override
     public void onClick(View v) {
-        mUserAnswerIndex = (int) v.getTag();
-        if (mAnswerIndex == mUserAnswerIndex) {
+        int userAnswerIndex = (int) v.getTag();
+        if (mQuestion.getAnswerIndex() == userAnswerIndex) {
             Toasty.success(this, "Correct", Toast.LENGTH_SHORT).show();
             mScore++;
         } else {
@@ -142,6 +151,7 @@ public class QuestionActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void run() {
                 mEnableTouchEvents = true;
+                mQuestionBank.next();
                 main();
             }
         }, 1000);
@@ -150,5 +160,13 @@ public class QuestionActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         return mEnableTouchEvents && super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(BUNDLE_STATE_SCORE, mScore);
+        outState.putInt(BUNDLE_STATE_QUESTION, mQuestionBank.getIndex());
+
+        super.onSaveInstanceState(outState);
     }
 }
